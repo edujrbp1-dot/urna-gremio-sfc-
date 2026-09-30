@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Urna Eletrônica — Grêmio Estudantil</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#e9e9e9;color:#111;font-family:Arial,Helvetica,sans-serif}
+header{background:#111;color:#fff;padding:14px 20px;text-align:center;border-bottom:5px solid #c9a227}
+header h1{font-size:23px;margin:0}header p{margin:5px 0 0;font-size:14px}
+nav{background:#222;display:flex;gap:8px;justify-content:center;padding:8px;position:sticky;top:0;z-index:10}
+nav button{background:#444;color:#fff;border:1px solid #666;padding:10px 14px;border-radius:5px;font-weight:bold;cursor:pointer}
+nav button.active{background:#c9a227;color:#111}
+.page{display:none;max-width:1100px;margin:20px auto;padding:0 12px}.page.active{display:block}
+.card{background:#fff;padding:20px;border-radius:8px;box-shadow:0 2px 10px #0002;margin-bottom:16px}
+.row{display:flex;gap:12px;flex-wrap:wrap}.field{flex:1;min-width:180px}
+label{font-weight:bold;display:block;margin-bottom:5px}input,select{width:100%;padding:11px;border:1px solid #aaa;border-radius:5px;font-size:16px}
+button.primary{background:#0757a6;color:#fff;border:0;padding:11px 17px;border-radius:5px;font-weight:bold;cursor:pointer}
+button.gold{background:#c9a227;color:#111;border:0;padding:11px 17px;border-radius:5px;font-weight:bold;cursor:pointer}
+button.red{background:#b3261e;color:#fff;border:0;padding:8px 12px;border-radius:5px;cursor:pointer}
+.small{font-size:13px;color:#555}.hide{display:none}
+.urna{background:#d4d4d4;border:9px solid #444;border-radius:9px;max-width:950px;margin:auto;padding:16px;display:grid;grid-template-columns:1.25fr .75fr;gap:16px;box-shadow:0 5px 20px #0004}
+.screen{background:#eee;border:4px solid #222;min-height:520px;padding:22px;position:relative}
+.screenTop{font-weight:bold;text-align:center;font-size:18px;margin-bottom:15px}.cargo{text-align:center;font-size:20px;font-weight:bold;margin-bottom:20px}
+.line{display:flex;align-items:center;gap:10px;margin:10px 0}.label{width:120px;font-weight:bold}.digits{font-size:30px;letter-spacing:8px;min-width:210px;border-bottom:2px solid #222;padding:5px}
+.photo{position:absolute;right:25px;top:125px;width:170px;height:210px;border:2px solid #333;background:#ddd;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.photo img{width:100%;height:100%;object-fit:cover}.info{margin-top:20px;font-size:18px}.info b{font-size:21px}
+.instructions{position:absolute;bottom:20px;left:22px;right:22px;border-top:1px solid #777;padding-top:12px;font-size:14px}
+.keyboard{background:#333;padding:18px;border-radius:7px;display:grid;grid-template-columns:repeat(3,1fr);gap:9px;align-content:center}
+.key{height:58px;border:0;border-radius:5px;font-size:22px;font-weight:bold;cursor:pointer}.key:active{transform:scale(.97)}
+.corr{background:#e7c35b}.blank{background:#eee}.confirm{background:#138a45;color:#fff;grid-column:1/4;height:65px}
+.audio{margin:10px 0;padding:10px;background:#f6f6f6;border-radius:5px}
+table{width:100%;border-collapse:collapse}th,td{padding:9px;border-bottom:1px solid #ddd;text-align:left}
+.badge{display:inline-block;padding:5px 8px;background:#eee;border-radius:5px;font-weight:bold}.candidateImg{width:50px;height:50px;object-fit:cover;border-radius:4px;vertical-align:middle}
+#toast{position:fixed;bottom:20px;right:20px;background:#111;color:#fff;padding:13px 18px;border-radius:7px;display:none;z-index:99}
+@media(max-width:800px){.urna{grid-template-columns:1fr}.photo{position:static;margin:15px auto}.screen{min-height:580px}}
+</style>
+</head>
+<body>
+<header><h1 id="headTitle">ELEIÇÃO DO GRÊMIO ESTUDANTIL</h1><p id="headSchool">Escola Estadual Sebastião Ferraz de Campos</p></header>
+<nav>
+<button class="active" onclick="page('vote',this)">🗳️ Votação</button>
+<button onclick="page('admin',this)">🔐 Administração</button>
+<button onclick="page('result',this)">📊 Apuração</button>
+</nav>
+
+<section id="vote" class="page active">
+<div class="urna">
+<div class="screen">
+<div class="screenTop">JUSTIÇA ELEITORAL — ELEIÇÃO ESCOLAR</div>
+<div id="cargo" class="cargo"></div>
+<div class="line"><div class="label">NÚMERO:</div><div id="digits" class="digits">_ _</div></div>
+<div id="photo" class="photo">FOTO</div>
+<div id="info" class="info"></div>
+<div class="instructions">Digite o número do candidato. Confira o nome e a foto. Use <b>CORRIGE</b> para alterar ou <b>CONFIRMA</b> para registrar o voto.</div>
+</div>
+<div class="keyboard">
+<button class="key" onclick="key(1)">1</button><button class="key" onclick="key(2)">2</button><button class="key" onclick="key(3)">3</button>
+<button class="key" onclick="key(4)">4</button><button class="key" onclick="key(5)">5</button><button class="key" onclick="key(6)">6</button>
+<button class="key" onclick="key(7)">7</button><button class="key" onclick="key(8)">8</button><button class="key" onclick="key(9)">9</button>
+<button class="key corr" onclick="correct()">CORRIGE</button><button class="key" onclick="key(0)">0</button><button class="key blank" onclick="blank()">BRANCO</button>
+<button class="key confirm" onclick="confirmVote()">CONFIRMA</button>
+</div>
+</div>
+<div class="audio"><label><input type="checkbox" id="audioToggle" checked> 🔊 Falar instruções em voz alta</label></div>
+</section>
+
+<section id="admin" class="page">
+<div class="card" id="loginCard">
+<h2>🔐 Acesso administrativo</h2><p class="small">A administração fica separada da tela de votação.</p>
+<input id="pin" type="password" inputmode="numeric" placeholder="Senha administrativa"><br><br>
+<button class="primary" onclick="login()">Entrar</button>
+</div>
+<div id="adminPanel" class="hide">
+<div class="card"><h2>⚙️ Configuração</h2>
+<div class="row"><div class="field"><label>Nome da escola</label><input id="school"></div><div class="field"><label>Título</label><input id="title"></div></div><br>
+<button class="gold" onclick="saveSettings()">Salvar</button>
+</div>
+<div class="card"><h2>➕ Novo cargo</h2>
+<div class="row"><div class="field"><label>Nome do cargo</label><input id="cargoInput" placeholder="Ex.: Presidente"></div><div class="field"><label>Quantidade de dígitos</label><select id="digitsInput"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option></select></div></div><br>
+<button class="primary" onclick="addCargo()">Adicionar cargo</button>
+</div>
+<div class="card"><h2>👤 Cadastrar estudante/candidato</h2>
+<div class="row"><div class="field"><label>Cargo</label><select id="candidateCargo"></select></div><div class="field"><label>Número</label><input id="candidateNumber" inputmode="numeric"></div></div><br>
+<div class="row"><div class="field"><label>Nome completo</label><input id="candidateName"></div><div class="field"><label>Turma (opcional)</label><input id="candidateClass" placeholder="Ex.: 8º B"></div></div><br>
+<label>Foto do estudante</label><input id="candidatePhoto" type="file" accept="image/*"><br><br>
+<button class="primary" onclick="addCandidate()">Cadastrar candidato</button>
+</div>
+<div class="card"><h2>📋 Cargos e candidatos</h2><div id="manage"></div></div>
+<div class="card"><h2>🛡️ Segurança e eleição</h2>
+<p class="small">A senha protege o painel dentro desta aplicação. Para segurança eleitoral real, recomendamos usar um computador dedicado, conta do Windows protegida e não deixar o arquivo aberto para edição.</p>
+<button class="primary" onclick="changePin()">Alterar senha</button>
+<button class="gold" onclick="exportResults()">Exportar apuração</button>
+<button class="red" onclick="resetVotes()">Zerar votos</button>
+</div>
+</div></section>
+
+<section id="result" class="page">
+<div class="card"><h2>📊 Apuração</h2><div id="results"></div></div>
+</section>
+<div id="toast"></div>
+
+<script>
+const STORE='gremio_urna_cargos_v2';
+const DEFAULT={settings:{school:'Escola Estadual Sebastião Ferraz de Campos',title:'ELEIÇÃO DO GRÊMIO ESTUDANTIL'},pin:'1234',cargos:[],current:0};
+let db=JSON.parse(localStorage.getItem(STORE)||'null')||DEFAULT;
+let typed='',blankVote=false,admin=false;
+
+function save(){localStorage.setItem(STORE,JSON.stringify(db))}
+function esc(x){return String(x).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function page(id,b){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(id==='admin')renderAdmin();if(id==='result')renderResults();if(id==='vote')renderVote()}
+function speak(t){if(document.getElementById('audioToggle').checked && 'speechSynthesis'in window){speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(t);u.lang='pt-BR';u.rate=.9;speechSynthesis.speak(u)}}
+function currentCargo(){return db.cargos[db.current]}
+function key(n){if(blankVote)return;let c=currentCargo();let max=c?c.digits:2;if(typed.length<max)typed+=n;renderVote()}
+function correct(){typed='';blankVote=false;renderVote()}
+function blank(){typed='';blankVote=true;renderVote();speak('Voto em branco. Aperte confirma para registrar.')}
+function findCandidate(){let c=currentCargo();return c?.candidates.find(x=>String(x.number)===typed)}
+function renderVote(){
+let c=currentCargo();document.getElementById('cargo').textContent=c?c.name:'NENHUM CARGO CONFIGURADO';
+document.getElementById('digits').textContent=blankVote?'BRANCO':(typed?typed.split('').join(' '):'_ '.repeat(c?.digits||2).trim());
+let ph=document.getElementById('photo'),info=document.getElementById('info');ph.innerHTML='FOTO';info.innerHTML='';
+if(blankVote){info.innerHTML='<b>VOTO EM BRANCO</b>'}
+else if(typed){
+let cand=findCandidate();
+if(cand){if(cand.photo){ph.innerHTML='<img src="'+cand.photo+'">'}else ph.innerHTML='SEM FOTO';info.innerHTML='<b>'+esc(cand.name)+'</b><br>Número '+esc(cand.number)+(cand.className?'<br>Turma: '+esc(cand.className):'');}
+else{info.innerHTML='<b>VOTO NULO</b><br>Número não cadastrado';}
+}
+}
+function confirmVote(){
+let c=currentCargo();if(!c){alert('A administração ainda não cadastrou cargos.');return}
+let cand=blankVote?null:findCandidate();if(!blankVote && !cand){if(!confirm('Número não cadastrado. Confirmar como voto nulo?'))return;c.nullVotes++}else if(blankVote)c.blankVotes++;else cand.votes++;
+save();speak('Voto confirmado.');toast('VOTO CONFIRMADO!');
+setTimeout(()=>{typed='';blankVote=false;if(db.current<db.cargos.length-1)db.current++;else db.current=0;save();renderVote()},1200)
+}
+function login(){if(document.getElementById('pin').value===db.pin){admin=true;document.getElementById('loginCard').classList.add('hide');document.getElementById('adminPanel').classList.remove('hide');renderAdmin();toast('Acesso autorizado')}else alert('Senha incorreta.')}
+function addCargo(){let name=document.getElementById('cargoInput').value.trim();let digits=Number(document.getElementById('digitsInput').value);if(!name)return alert('Digite o nome do cargo.');db.cargos.push({name,digits,candidates:[],blankVotes:0,nullVotes:0});save();document.getElementById('cargoInput').value='';renderAdmin();renderVote();toast('Cargo adicionado!')}
+function addCandidate(){
+let idx=Number(document.getElementById('candidateCargo').value),num=document.getElementById('candidateNumber').value.trim(),name=document.getElementById('candidateName').value.trim(),cl=document.getElementById('candidateClass').value.trim(),file=document.getElementById('candidatePhoto').files[0];
+if(!db.cargos[idx]||!num||!name)return alert('Preencha cargo, número e nome.');
+if(db.cargos[idx].candidates.some(x=>String(x.number)===num))return alert('Esse número já está ocupado neste cargo.');
+const done=photo=>{db.cargos[idx].candidates.push({number:num,name,className:cl,photo:photo||'',votes:0});save();document.getElementById('candidateNumber').value='';document.getElementById('candidateName').value='';document.getElementById('candidateClass').value='';document.getElementById('candidatePhoto').value='';renderAdmin();toast('Candidato cadastrado!')};
+if(file){let r=new FileReader();r.onload=()=>done(r.result);r.readAsDataURL(file)}else done('');
+}
+function renderAdmin(){
+document.getElementById('school').value=db.settings.school;document.getElementById('title').value=db.settings.title;
+let sel=document.getElementById('candidateCargo');sel.innerHTML=db.cargos.map((c,i)=>`<option value="${i}">${esc(c.name)}</option>`).join('');
+let el=document.getElementById('manage');if(!db.cargos.length){el.innerHTML='<p>Nenhum cargo cadastrado.</p>';return}
+el.innerHTML=db.cargos.map((c,i)=>`<div style="border:1px solid #ddd;padding:12px;margin:10px 0;border-radius:6px"><h3>${esc(c.name)} <span class="badge">${c.digits} dígitos</span></h3>
+<table><tr><th>Foto</th><th>Número</th><th>Nome</th><th>Turma</th><th>Votos</th></tr>${c.candidates.map(x=>`<tr><td>${x.photo?'<img class="candidateImg" src="'+x.photo+'">':'—'}</td><td>${esc(x.number)}</td><td>${esc(x.name)}</td><td>${esc(x.className||'')}</td><td>${x.votes||0}</td></tr>`).join('')}</table>
+<button class="red" onclick="removeCargo(${i})">Excluir cargo e candidatos</button></div>`).join('');
+}
+function removeCargo(i){if(confirm('Excluir este cargo e todos os candidatos dele?')){db.cargos.splice(i,1);db.current=0;save();renderAdmin();renderVote()}}
+function saveSettings(){db.settings.school=document.getElementById('school').value;db.settings.title=document.getElementById('title').value;save();renderHeader();toast('Configurações salvas')}
+function renderHeader(){document.getElementById('headTitle').textContent=db.settings.title;document.getElementById('headSchool').textContent=db.settings.school}
+function changePin(){let a=prompt('Nova senha administrativa:');if(!a||a.length<6)return alert('Use pelo menos 6 caracteres.');db.pin=a;save();alert('Senha alterada.')}
+function resetVotes(){if(!confirm('Zerar TODOS os votos?'))return;db.cargos.forEach(c=>{c.blankVotes=0;c.nullVotes=0;c.candidates.forEach(x=>x.votes=0)});save();renderAdmin();renderResults();toast('Votos zerados')}
+function renderResults(){
+let el=document.getElementById('results');if(!db.cargos.length){el.innerHTML='<p>Nenhum cargo cadastrado.</p>';return}
+el.innerHTML=db.cargos.map(c=>`<div class="card"><h3>${esc(c.name)}</h3><table><tr><th>Número</th><th>Nome</th><th>Votos</th></tr>${[...c.candidates].sort((a,b)=>b.votes-a.votes).map(x=>`<tr><td>${esc(x.number)}</td><td>${esc(x.name)}</td><td>${x.votes||0}</td></tr>`).join('')}<tr><td colspan="2">Brancos</td><td>${c.blankVotes}</td></tr><tr><td colspan="2">Nulos</td><td>${c.nullVotes}</td></tr></table></div>`).join('');
+}
+function exportResults(){
+let lines=[db.settings.title,db.settings.school,'','APURAÇÃO'];db.cargos.forEach(c=>{lines.push('\\n'+c.name);c.candidates.forEach(x=>lines.push(`${x.number} - ${x.name}: ${x.votes||0}`));lines.push(`Brancos: ${c.blankVotes}`,`Nulos: ${c.nullVotes}`)});let blob=new Blob([lines.join('\\n')],{type:'text/plain'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='apuracao-gremio.txt';a.click();
+}
+function toast(t){let x=document.getElementById('toast');x.textContent=t;x.style.display='block';setTimeout(()=>x.style.display='none',1700)}
+document.addEventListener('contextmenu',e=>e.preventDefault());
+document.addEventListener('keydown',e=>{if(e.key==='F12'||(e.ctrlKey&&e.shiftKey&&['I','J','C'].includes(e.key.toUpperCase()))||(e.ctrlKey&&e.key.toUpperCase()==='U'))e.preventDefault()});
+renderHeader();renderAdmin();renderVote();
+</script>
+</body></html>
